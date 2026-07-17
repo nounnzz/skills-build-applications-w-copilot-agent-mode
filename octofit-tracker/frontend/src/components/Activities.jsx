@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getApiBaseUrl } from '../lib/api.js';
+import { getApiBaseUrl } from '../lib/api';
 
 function Activities() {
   const [activities, setActivities] = useState([]);
@@ -10,10 +10,12 @@ function Activities() {
     async function loadActivities() {
       try {
         const response = await fetch(`${getApiBaseUrl()}/api/activities/`);
-        if (!response.ok) throw new Error('Unable to fetch activities');
+        if (!response.ok) {
+          throw new Error('Unable to load activities');
+        }
         const payload = await response.json();
-        const records = Array.isArray(payload?.activities) ? payload.activities : Array.isArray(payload) ? payload : [];
-        setActivities(records);
+        const list = Array.isArray(payload) ? payload : payload.activities ?? payload.results ?? [];
+        setActivities(list);
       } catch (err) {
         setError(err.message || 'Unable to load activities');
       } finally {
@@ -25,21 +27,20 @@ function Activities() {
   }, []);
 
   return (
-    <section className="card bg-secondary-subtle text-dark shadow-sm">
-      <div className="card-body">
-        <h2 className="h4 fw-bold">Activities</h2>
-        {loading && <p className="text-muted">Loading activities…</p>}
-        {error && <p className="text-danger">{error}</p>}
-        {!loading && !error && (
-          <ul className="list-group list-group-flush mt-3">
-            {activities.map((activity) => (
-              <li key={activity._id || activity.id || `${activity.type}-${activity.date}`} className="list-group-item bg-transparent px-0">
-                <strong>{activity.type}</strong> — {activity.durationMinutes} mins on {activity.date}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <section className="card bg-dark-subtle p-4">
+      <h2 className="h4 mb-3">Activities</h2>
+      {loading && <p>Loading activities...</p>}
+      {error && <p className="text-danger">{error}</p>}
+      {!loading && !error && (
+        <ul className="list-group">
+          {activities.map((activity) => (
+            <li className="list-group-item" key={activity._id || activity.id || activity.type}>
+              <strong>{activity.type}</strong> — {activity.durationMinutes} min on {activity.date}
+              {activity.caloriesBurned ? ` • ${activity.caloriesBurned} kcal` : ''}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

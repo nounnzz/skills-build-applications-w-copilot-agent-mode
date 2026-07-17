@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getApiBaseUrl } from '../lib/api.js';
+import { getApiBaseUrl } from '../lib/api';
 
 function Workouts() {
   const [workouts, setWorkouts] = useState([]);
@@ -10,10 +10,12 @@ function Workouts() {
     async function loadWorkouts() {
       try {
         const response = await fetch(`${getApiBaseUrl()}/api/workouts/`);
-        if (!response.ok) throw new Error('Unable to fetch workouts');
+        if (!response.ok) {
+          throw new Error('Unable to load workouts');
+        }
         const payload = await response.json();
-        const records = Array.isArray(payload?.workouts) ? payload.workouts : Array.isArray(payload) ? payload : [];
-        setWorkouts(records);
+        const list = Array.isArray(payload) ? payload : payload.workouts ?? payload.results ?? [];
+        setWorkouts(list);
       } catch (err) {
         setError(err.message || 'Unable to load workouts');
       } finally {
@@ -25,21 +27,20 @@ function Workouts() {
   }, []);
 
   return (
-    <section className="card bg-secondary-subtle text-dark shadow-sm">
-      <div className="card-body">
-        <h2 className="h4 fw-bold">Workouts</h2>
-        {loading && <p className="text-muted">Loading workouts…</p>}
-        {error && <p className="text-danger">{error}</p>}
-        {!loading && !error && (
-          <ul className="list-group list-group-flush mt-3">
-            {workouts.map((workout) => (
-              <li key={workout._id || workout.id || workout.name} className="list-group-item bg-transparent px-0">
-                <strong>{workout.name}</strong> — {workout.difficulty} · {workout.focusArea}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <section className="card bg-dark-subtle p-4">
+      <h2 className="h4 mb-3">Workouts</h2>
+      {loading && <p>Loading workouts...</p>}
+      {error && <p className="text-danger">{error}</p>}
+      {!loading && !error && (
+        <ul className="list-group">
+          {workouts.map((workout) => (
+            <li className="list-group-item" key={workout._id || workout.id || workout.name}>
+              <strong>{workout.name}</strong> — {workout.difficulty} • {workout.focusArea}
+              {workout.durationMinutes ? ` • ${workout.durationMinutes} min` : ''}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

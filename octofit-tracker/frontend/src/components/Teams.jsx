@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getApiBaseUrl } from '../lib/api.js';
+import { getApiBaseUrl } from '../lib/api';
 
 function Teams() {
   const [teams, setTeams] = useState([]);
@@ -10,10 +10,12 @@ function Teams() {
     async function loadTeams() {
       try {
         const response = await fetch(`${getApiBaseUrl()}/api/teams/`);
-        if (!response.ok) throw new Error('Unable to fetch teams');
+        if (!response.ok) {
+          throw new Error('Unable to load teams');
+        }
         const payload = await response.json();
-        const records = Array.isArray(payload?.teams) ? payload.teams : Array.isArray(payload) ? payload : [];
-        setTeams(records);
+        const list = Array.isArray(payload) ? payload : payload.teams ?? payload.results ?? [];
+        setTeams(list);
       } catch (err) {
         setError(err.message || 'Unable to load teams');
       } finally {
@@ -25,21 +27,20 @@ function Teams() {
   }, []);
 
   return (
-    <section className="card bg-secondary-subtle text-dark shadow-sm">
-      <div className="card-body">
-        <h2 className="h4 fw-bold">Teams</h2>
-        {loading && <p className="text-muted">Loading teams…</p>}
-        {error && <p className="text-danger">{error}</p>}
-        {!loading && !error && (
-          <ul className="list-group list-group-flush mt-3">
-            {teams.map((team) => (
-              <li key={team._id || team.id || team.name} className="list-group-item bg-transparent px-0">
-                <strong>{team.name}</strong> — {team.description}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <section className="card bg-dark-subtle p-4">
+      <h2 className="h4 mb-3">Teams</h2>
+      {loading && <p>Loading teams...</p>}
+      {error && <p className="text-danger">{error}</p>}
+      {!loading && !error && (
+        <ul className="list-group">
+          {teams.map((team) => (
+            <li className="list-group-item" key={team._id || team.id || team.name}>
+              <strong>{team.name}</strong> — {team.description || 'Team'}
+              {Array.isArray(team.members) ? ` • ${team.members.length} members` : ''}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

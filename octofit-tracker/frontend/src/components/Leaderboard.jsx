@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { getApiBaseUrl } from '../lib/api.js';
+import { getApiBaseUrl } from '../lib/api';
 
 function Leaderboard() {
-  const [rows, setRows] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -10,10 +10,12 @@ function Leaderboard() {
     async function loadLeaderboard() {
       try {
         const response = await fetch(`${getApiBaseUrl()}/api/leaderboard/`);
-        if (!response.ok) throw new Error('Unable to fetch leaderboard');
+        if (!response.ok) {
+          throw new Error('Unable to load leaderboard');
+        }
         const payload = await response.json();
-        const records = Array.isArray(payload?.leaderboard) ? payload.leaderboard : Array.isArray(payload) ? payload : [];
-        setRows(records);
+        const list = Array.isArray(payload) ? payload : payload.leaderboard ?? payload.results ?? [];
+        setEntries(list);
       } catch (err) {
         setError(err.message || 'Unable to load leaderboard');
       } finally {
@@ -25,21 +27,19 @@ function Leaderboard() {
   }, []);
 
   return (
-    <section className="card bg-secondary-subtle text-dark shadow-sm">
-      <div className="card-body">
-        <h2 className="h4 fw-bold">Leaderboard</h2>
-        {loading && <p className="text-muted">Loading leaderboard…</p>}
-        {error && <p className="text-danger">{error}</p>}
-        {!loading && !error && (
-          <ul className="list-group list-group-flush mt-3">
-            {rows.map((row) => (
-              <li key={row._id || row.id || row.name} className="list-group-item bg-transparent px-0">
-                <strong>{row.name}</strong> — {row.score} pts · streak {row.streak}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <section className="card bg-dark-subtle p-4">
+      <h2 className="h4 mb-3">Leaderboard</h2>
+      {loading && <p>Loading leaderboard...</p>}
+      {error && <p className="text-danger">{error}</p>}
+      {!loading && !error && (
+        <ol className="list-group list-group-numbered">
+          {entries.map((entry) => (
+            <li className="list-group-item" key={entry._id || entry.id || entry.name}>
+              <strong>{entry.name}</strong> — {entry.score} pts • streak {entry.streak}
+            </li>
+          ))}
+        </ol>
+      )}
     </section>
   );
 }

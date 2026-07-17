@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getApiBaseUrl } from '../lib/api.js';
+import { getApiBaseUrl } from '../lib/api';
 
 function Users() {
   const [users, setUsers] = useState([]);
@@ -10,10 +10,12 @@ function Users() {
     async function loadUsers() {
       try {
         const response = await fetch(`${getApiBaseUrl()}/api/users/`);
-        if (!response.ok) throw new Error('Unable to fetch users');
+        if (!response.ok) {
+          throw new Error('Unable to load users');
+        }
         const payload = await response.json();
-        const records = Array.isArray(payload?.users) ? payload.users : Array.isArray(payload) ? payload : [];
-        setUsers(records);
+        const list = Array.isArray(payload) ? payload : payload.users ?? payload.results ?? [];
+        setUsers(list);
       } catch (err) {
         setError(err.message || 'Unable to load users');
       } finally {
@@ -25,21 +27,20 @@ function Users() {
   }, []);
 
   return (
-    <section className="card bg-secondary-subtle text-dark shadow-sm">
-      <div className="card-body">
-        <h2 className="h4 fw-bold">Users</h2>
-        {loading && <p className="text-muted">Loading users…</p>}
-        {error && <p className="text-danger">{error}</p>}
-        {!loading && !error && (
-          <ul className="list-group list-group-flush mt-3">
-            {users.map((user) => (
-              <li key={user._id || user.id || `${user.name}-${user.email}`} className="list-group-item bg-transparent px-0">
-                <strong>{user.name}</strong> — {user.role} · {user.fitnessGoal}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <section className="card bg-dark-subtle p-4">
+      <h2 className="h4 mb-3">Users</h2>
+      {loading && <p>Loading users...</p>}
+      {error && <p className="text-danger">{error}</p>}
+      {!loading && !error && (
+        <ul className="list-group">
+          {users.map((user) => (
+            <li className="list-group-item" key={user._id || user.id || user.name}>
+              <strong>{user.name}</strong> — {user.role || user.fitnessGoal || 'Member'}
+              {user.email ? ` • ${user.email}` : ''}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
