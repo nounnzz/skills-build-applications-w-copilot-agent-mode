@@ -16,6 +16,13 @@ const withApiContext = <T>(payload: T) => ({
   ...payload,
 });
 
+app.get('/', (_req, res) => {
+  res.json(withApiContext({
+    message: 'OctoFit Tracker API is running',
+    endpoints: ['/api/health', '/api/users/', '/api/teams/', '/api/activities/', '/api/leaderboard/', '/api/workouts/'],
+  }));
+});
+
 app.get('/api/health', (_req, res) => {
   res.json(withApiContext({ status: 'ok' }));
 });
